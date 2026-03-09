@@ -160,7 +160,6 @@
     const { PDFDocument, rgb, degrees, StandardFonts } = PDFLib;
 
     const FONT_KEY = StandardFonts.Helvetica;
-    const ROTATION = -55;
     const DIAGONAL_RATIO = 0.8;
 
     let pdfFile = null, pdfBytes = null, pageCount = 0;
@@ -217,29 +216,67 @@
 
         for(const page of doc.getPages()){
           const{width,height}=page.getSize();
-          const diag=Math.sqrt(width*width+height*height);
-          const target=diag*DIAGONAL_RATIO;
 
-          // Binary search for font size that fills 80% of the diagonal
-          let lo=4,hi=600,best=48;
-          while(lo<=hi){const mid=Math.floor((lo+hi)/2);if(font.widthOfTextAtSize(text,mid)<target){best=mid;lo=mid+1}else{hi=mid-1}}
+          // The actual diagonal angle of the page (bottom-left to top-right)
+          const diagAngle = Math.atan2(height, width); // radians
+          const diagAngleDeg = diagAngle * (180 / Math.PI); // ~55° for A4
 
-          const tw=font.widthOfTextAtSize(text,best);
-          const th=font.heightAtSize(best);
-          const cx=width/2, cy=height/2;
-          const rad=(ROTATION*Math.PI)/180;
-          const dx=(tw/2)*Math.cos(rad)+(th/2)*Math.sin(rad);
-          const dy=(tw/2)*Math.sin(rad)-(th/2)*Math.cos(rad);
+          // Diagonal length of the page
+          const diag = Math.sqrt(width * width + height * height);
+          const targetWidth = diag * DIAGONAL_RATIO;
 
-          page.drawText(text,{x:cx-dx,y:cy-dy,size:best,font,color:rgb(r,g,b),opacity:op,rotate:degrees(ROTATION)});
+          // Find the font size so the text width = 80% of the diagonal
+          let lo = 4, hi = 600, bestSize = 48;
+          while (lo <= hi) {
+            const mid = Math.floor((lo + hi) / 2);
+            if (font.widthOfTextAtSize(text, mid) < targetWidth) { bestSize = mid; lo = mid + 1; }
+            else { hi = mid - 1; }
+          }
+
+          const tw = font.widthOfTextAtSize(text, bestSize);
+          const th = font.heightAtSize(bestSize);
+          const rad = diagAngle; // positive angle = bottom-left to top-right
+
+          // pdf-lib drawText places text at (x, y) = bottom-left corner of the text baseline
+          // With rotation, we need to compute so the text is centered on the page center
+          const cx = width / 2;
+          const cy = height / 2;
+
+          // The text anchor is its left-baseline point.
+          // After rotation by `rad`, the center of the text bounding box relative to anchor is:
+          //   center offset = (tw/2 * cos(rad) - th/2 * sin(rad),  tw/2 * sin(rad) + th/2 * cos(rad))
+          // We want: anchor + centerOffset = (cx, cy)
+          // So: anchor = (cx, cy) - centerOffset
+
+          const cosR = Math.cos(rad);
+          const sinR = Math.sin(rad);
+
+          // Offset from anchor to center of text box (accounting for baseline ~ 80% of height from bottom)
+          const baselineRatio = 0.3; // approximate: baseline is ~30% up from bottom of bounding box
+          const ofsX = (tw / 2) * cosR - (th * baselineRatio) * sinR;
+          const ofsY = (tw / 2) * sinR + (th * baselineRatio) * cosR;
+
+          const x = cx - ofsX;
+          const y = cy - ofsY;
+
+          page.drawText(text, {
+            x, y,
+            size: bestSize,
+            font,
+            color: rgb(r, g, b),
+            opacity: op,
+            rotate: degrees(diagAngleDeg),
+          });
         }
 
-        const out=await doc.save();
-        const blob=new Blob([out],{type:'application/pdf'});
-        const url=URL.createObjectURL(blob);
-        const a=document.createElement('a');a.href=url;
-        a.download=pdfFile.name.replace(/\.pdf$/i,'')+'_watermarked.pdf';
-        a.click();URL.revokeObjectURL(url);
+        const out = await doc.save();
+        const blob = new Blob([out], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = pdfFile.name.replace(/\.pdf$/i, '') + '_watermarked.pdf';
+        a.click();
+        URL.revokeObjectURL(url);
       }catch(err){showError('Erreur : '+err.message)}
       exportBtn.innerHTML=exportBtnDefault;exportBtn.disabled=false;updateBtn();
     });
