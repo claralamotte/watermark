@@ -5,88 +5,114 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PDF Watermark</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📄</text></svg>" />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <style>
     :root {
-      --bg: #f8f7f4;
+      --bg: #f5f0e8;
       --surface: #ffffff;
-      --border: #e8e6e1;
-      --border-focus: #c4c0b8;
-      --text: #1a1917;
-      --text-sec: #7c7a73;
-      --accent: #1a1917;
-      --accent-hover: #333128;
-      --danger: #c0392b;
-      --radius: 10px;
-      --radius-lg: 14px;
+      --border: #ddd6c8;
+      --border-focus: #b8ad9a;
+      --navy: #0a1f3b;
+      --navy-light: #142d50;
+      --navy-muted: #3a5478;
+      --text: #0a1f3b;
+      --text-sec: #6b7a8d;
+      --accent: #0a1f3b;
+      --accent-hover: #142d50;
+      --danger: #b33a3a;
+      --radius: 8px;
+      --radius-lg: 12px;
       --tr: 0.2s cubic-bezier(0.4,0,0.2,1);
     }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;align-items:center;justify-content:center}
-    .app{max-width:480px;width:100%;margin:0 auto;padding:3rem 1.5rem}
-    header{margin-bottom:2.5rem;text-align:center}
-    .logo{display:flex;align-items:center;justify-content:center;gap:0.65rem;margin-bottom:0.35rem}
-    .logo h1{font-size:1.35rem;font-weight:600;letter-spacing:-0.03em}
-    .subtitle{color:var(--text-sec);font-size:0.9rem}
-    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2rem;box-shadow:0 1px 2px rgba(0,0,0,0.04)}
-    .section-label{font-size:0.68rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-sec);margin-bottom:0.85rem;font-family:'JetBrains Mono',monospace}
-    .dropzone{border:1.5px dashed var(--border);border-radius:var(--radius);padding:2.25rem 1.5rem;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.65rem;cursor:pointer;transition:all var(--tr)}
-    .dropzone:hover{border-color:var(--border-focus);background:rgba(0,0,0,0.015)}
-    .dropzone.dragging{border-color:var(--accent);background:rgba(0,0,0,0.025);border-style:solid}
-    .dropzone-icon{color:var(--text-sec);opacity:0.45}
-    .dropzone-text{font-size:0.88rem;font-weight:500}
-    .dropzone-hint{font-size:0.76rem;color:var(--text-sec)}
-    .file-card{display:flex;align-items:center;justify-content:space-between;padding:0.75rem 0.9rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg)}
-    .file-info{display:flex;align-items:center;gap:0.65rem;min-width:0}
-    .file-icon{background:var(--accent);color:#fff;font-size:0.58rem;font-weight:700;font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;padding:0.3rem 0.45rem;border-radius:5px;flex-shrink:0}
-    .file-name{font-size:0.82rem;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .file-meta{font-size:0.72rem;color:var(--text-sec);margin-top:1px}
-    .remove-btn{background:none;border:none;cursor:pointer;color:var(--text-sec);padding:0.25rem;border-radius:6px;transition:all var(--tr);display:flex;flex-shrink:0}
-    .remove-btn:hover{color:var(--danger);background:rgba(192,57,43,0.08)}
-    .divider{height:1px;background:var(--border);margin:1.5rem 0}
-    .watermark-input{width:100%;font-family:'DM Sans',sans-serif;font-size:0.9rem;padding:0.8rem 1rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);resize:none;outline:none;transition:border-color var(--tr);line-height:1.5}
-    .watermark-input::placeholder{color:var(--text-sec);opacity:0.55}
-    .watermark-input:focus{border-color:var(--accent)}
-    .export-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:0.5rem;padding:0.8rem 1.5rem;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:0.88rem;font-weight:500;cursor:pointer;transition:all var(--tr);margin-top:1.5rem}
-    .export-btn:hover:not(.disabled){background:var(--accent-hover);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,0.12)}
-    .export-btn.disabled{opacity:0.3;cursor:not-allowed}
-    .spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+    body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;align-items:center;justify-content:center}
+    .app{max-width:460px;width:100%;margin:0 auto;padding:3rem 1.25rem}
+
+    /* HEADER */
+    header{margin-bottom:2rem}
+    .logo-row{display:flex;align-items:center;gap:0.7rem;margin-bottom:0.3rem}
+    .logo-mark{width:34px;height:34px;background:var(--navy);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .logo-mark svg{display:block}
+    .logo-row h1{font-size:1.15rem;font-weight:700;letter-spacing:-0.02em;color:var(--navy);text-transform:uppercase;line-height:1.2}
+    .subtitle{color:var(--text-sec);font-size:0.82rem;font-weight:400;margin-top:0.15rem;padding-left:0.05rem}
+
+    /* CARD */
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.75rem;box-shadow:0 1px 3px rgba(10,31,59,0.06)}
+    .section-label{font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--navy-muted);margin-bottom:0.75rem}
+
+    /* DROPZONE */
+    .dropzone{border:1.5px dashed var(--border);border-radius:var(--radius);padding:2rem 1.25rem;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.55rem;cursor:pointer;transition:all var(--tr)}
+    .dropzone:hover{border-color:var(--navy-muted);background:rgba(10,31,59,0.02)}
+    .dropzone.dragging{border-color:var(--navy);background:rgba(10,31,59,0.04);border-style:solid}
+    .dropzone-icon{color:var(--navy-muted);opacity:0.4}
+    .dropzone-text{font-size:0.84rem;font-weight:600;color:var(--navy)}
+    .dropzone-hint{font-size:0.72rem;color:var(--text-sec)}
+
+    /* FILE */
+    .file-card{display:flex;align-items:center;justify-content:space-between;padding:0.7rem 0.85rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg)}
+    .file-info{display:flex;align-items:center;gap:0.6rem;min-width:0}
+    .file-icon{background:var(--navy);color:#fff;font-size:0.55rem;font-weight:700;letter-spacing:0.06em;padding:0.28rem 0.42rem;border-radius:4px;flex-shrink:0}
+    .file-name{font-size:0.8rem;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .file-meta{font-size:0.7rem;color:var(--text-sec);margin-top:1px}
+    .remove-btn{background:none;border:none;cursor:pointer;color:var(--text-sec);padding:0.2rem;border-radius:5px;transition:all var(--tr);display:flex;flex-shrink:0}
+    .remove-btn:hover{color:var(--danger);background:rgba(179,58,58,0.08)}
+
+    .divider{height:1px;background:var(--border);margin:1.35rem 0}
+
+    /* INPUT */
+    .watermark-input{width:100%;font-family:'Inter',system-ui,sans-serif;font-size:0.85rem;padding:0.7rem 0.9rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);resize:none;outline:none;transition:border-color var(--tr);line-height:1.5}
+    .watermark-input::placeholder{color:var(--text-sec);opacity:0.5}
+    .watermark-input:focus{border-color:var(--navy)}
+
+    /* EXPORT */
+    .export-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:0.45rem;padding:0.75rem 1.25rem;background:var(--navy);color:#fff;border:none;border-radius:var(--radius);font-family:'Inter',system-ui,sans-serif;font-size:0.84rem;font-weight:600;cursor:pointer;transition:all var(--tr);margin-top:1.35rem;letter-spacing:0.01em}
+    .export-btn:hover:not(.disabled){background:var(--accent-hover);transform:translateY(-1px);box-shadow:0 4px 14px rgba(10,31,59,0.18)}
+    .export-btn.disabled{opacity:0.25;cursor:not-allowed}
+    .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
     @keyframes spin{to{transform:rotate(360deg)}}
-    .error-msg{font-size:0.78rem;color:var(--danger);padding:0.6rem 0.8rem;background:rgba(192,57,43,0.06);border-radius:8px;margin-top:1rem}
-    .settings-toggle{display:flex;align-items:center;gap:0.4rem;background:none;border:none;cursor:pointer;color:var(--text-sec);font-family:'DM Sans',sans-serif;font-size:0.74rem;font-weight:500;padding:0;margin-top:1.25rem;transition:color var(--tr)}
-    .settings-toggle:hover{color:var(--text)}
+
+    .error-msg{font-size:0.75rem;color:var(--danger);padding:0.55rem 0.75rem;background:rgba(179,58,58,0.06);border-radius:6px;margin-top:1rem}
+
+    /* SETTINGS */
+    .settings-toggle{display:flex;align-items:center;gap:0.35rem;background:none;border:none;cursor:pointer;color:var(--text-sec);font-family:'Inter',system-ui,sans-serif;font-size:0.7rem;font-weight:500;padding:0;margin-top:1.1rem;transition:color var(--tr)}
+    .settings-toggle:hover{color:var(--navy)}
     .settings-toggle svg{transition:transform var(--tr)}
     .settings-toggle.open svg{transform:rotate(180deg)}
     .settings-drawer{max-height:0;overflow:hidden;transition:max-height 0.35s ease,opacity 0.3s ease;opacity:0}
     .settings-drawer.open{max-height:400px;opacity:1}
-    .settings-inner{padding-top:1rem}
-    .control-group{margin-bottom:0.9rem}
-    .control-group label{display:flex;align-items:center;justify-content:space-between;font-size:0.76rem;font-weight:500;margin-bottom:0.35rem}
-    .val{font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--text-sec);font-weight:400}
-    .control-row{display:grid;grid-template-columns:1fr 1fr;gap:0.85rem}
-    input[type="range"]{width:100%;height:4px;appearance:none;background:var(--border);border-radius:2px;outline:none;cursor:pointer}
-    input[type="range"]::-webkit-slider-thumb{appearance:none;width:14px;height:14px;background:var(--accent);border-radius:50%;cursor:pointer}
-    input[type="range"]::-moz-range-thumb{width:14px;height:14px;background:var(--accent);border:none;border-radius:50%}
-    .color-pick{display:flex;align-items:center;gap:0.5rem}
-    .color-pick input[type="color"]{width:28px;height:28px;border:1px solid var(--border);border-radius:6px;cursor:pointer;padding:2px;background:none}
-    .color-hex{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-sec)}
-    footer{text-align:center;padding:1.75rem 0 0;font-size:0.72rem;color:var(--text-sec);opacity:0.6}
+    .settings-inner{padding-top:0.9rem}
+    .control-group{margin-bottom:0.8rem}
+    .control-group label{display:flex;align-items:center;justify-content:space-between;font-size:0.72rem;font-weight:500;margin-bottom:0.3rem;color:var(--navy)}
+    .val{font-size:0.65rem;color:var(--text-sec);font-weight:400;font-variant-numeric:tabular-nums}
+    .control-row{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem}
+    input[type="range"]{width:100%;height:3px;appearance:none;background:var(--border);border-radius:2px;outline:none;cursor:pointer}
+    input[type="range"]::-webkit-slider-thumb{appearance:none;width:13px;height:13px;background:var(--navy);border-radius:50%;cursor:pointer}
+    input[type="range"]::-moz-range-thumb{width:13px;height:13px;background:var(--navy);border:none;border-radius:50%}
+    .color-pick{display:flex;align-items:center;gap:0.45rem}
+    .color-pick input[type="color"]{width:26px;height:26px;border:1px solid var(--border);border-radius:5px;cursor:pointer;padding:2px;background:none}
+    .color-hex{font-size:0.68rem;color:var(--text-sec);font-variant-numeric:tabular-nums}
+
+    footer{text-align:center;padding:1.5rem 0 0;font-size:0.68rem;color:var(--text-sec);opacity:0.55}
     .hidden{display:none}
   </style>
 </head>
 <body>
   <div class="app">
     <header>
-      <div class="logo">
-        <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
-          <rect x="2" y="2" width="24" height="24" rx="4" stroke="currentColor" stroke-width="2"/>
-          <path d="M8 20V8h4.5a3.5 3.5 0 010 7H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <line x1="6" y1="26" x2="22" y2="4" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
-        </svg>
-        <h1>PDF Watermark</h1>
+      <div class="logo-row">
+        <div class="logo-mark">
+          <svg width="18" height="18" viewBox="0 0 28 28" fill="none">
+            <rect x="2" y="2" width="24" height="24" rx="3" stroke="#ffffff" stroke-width="2" fill="none"/>
+            <path d="M8 20V8h4.5a3.5 3.5 0 010 7H8" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="6" y1="25" x2="22" y2="5" stroke="#ffffff" stroke-width="1.2" opacity="0.45"/>
+          </svg>
+        </div>
+        <div>
+          <h1>PDF Watermark</h1>
+          <p class="subtitle">Filigrane sur vos documents, en local</p>
+        </div>
       </div>
-      <p class="subtitle">Filigrane sur vos PDF, en local</p>
     </header>
 
     <div class="card">
@@ -94,7 +120,7 @@
       <div id="dropzone" class="dropzone">
         <input type="file" id="fileInput" accept="application/pdf" style="display:none"/>
         <div class="dropzone-icon">
-          <svg width="36" height="36" viewBox="0 0 40 40" fill="none">
+          <svg width="32" height="32" viewBox="0 0 40 40" fill="none">
             <path d="M20 6v20M12 14l8-8 8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M6 28h28v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4z" stroke="currentColor" stroke-width="2"/>
           </svg>
@@ -111,7 +137,7 @@
           </div>
         </div>
         <button class="remove-btn" id="removeBtn" title="Retirer">
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M5 5l8 8M13 5l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <svg width="16" height="16" viewBox="0 0 18 18" fill="none"><path d="M5 5l8 8M13 5l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         </button>
       </div>
 
@@ -121,21 +147,21 @@
       <textarea id="watermarkText" class="watermark-input" rows="1" placeholder="Ex : CONFIDENTIEL"></textarea>
 
       <button class="settings-toggle" id="settingsToggle">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Paramètres avancés
       </button>
       <div class="settings-drawer" id="settingsDrawer">
         <div class="settings-inner">
           <div class="control-row">
             <div class="control-group">
-              <label>Opacité <span class="val" id="opacityVal">12%</span></label>
-              <input type="range" id="opacity" min="2" max="50" value="12"/>
+              <label>Opacité <span class="val" id="opacityVal">10%</span></label>
+              <input type="range" id="opacity" min="2" max="40" value="10"/>
             </div>
             <div class="control-group">
               <label>Couleur</label>
               <div class="color-pick">
-                <input type="color" id="color" value="#999999"/>
-                <span class="color-hex" id="colorHex">#999999</span>
+                <input type="color" id="color" value="#8899aa"/>
+                <span class="color-hex" id="colorHex">#8899aa</span>
               </div>
             </div>
           </div>
@@ -145,7 +171,7 @@
       <div id="errorMsg" class="error-msg hidden"></div>
 
       <button class="export-btn disabled" id="exportBtn" disabled>
-        <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
           <path d="M10 3v10M6 9l4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M3 14v2a2 2 0 002 2h10a2 2 0 002-2v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
@@ -153,14 +179,14 @@
       </button>
     </div>
 
-    <footer>Aucun fichier n'est envoyé — traitement 100% local</footer>
+    <footer>Aucun fichier envoyé — traitement 100% navigateur</footer>
   </div>
 
   <script>
     const { PDFDocument, rgb, degrees, StandardFonts } = PDFLib;
 
     const FONT_KEY = StandardFonts.Helvetica;
-    const DIAGONAL_RATIO = 0.8;
+    const DIAGONAL_RATIO = 0.55; // 55% of diagonal — readable but not overwhelming
 
     let pdfFile = null, pdfBytes = null, pageCount = 0;
 
@@ -217,47 +243,42 @@
         for(const page of doc.getPages()){
           const{width,height}=page.getSize();
 
-          // The actual diagonal angle of the page (bottom-left to top-right)
-          const diagAngle = Math.atan2(height, width); // radians
-          const diagAngleDeg = diagAngle * (180 / Math.PI); // ~55° for A4
+          // True diagonal angle of the page: bottom-left → top-right
+          const diagAngleRad = Math.atan2(height, width);
+          const diagAngleDeg = diagAngleRad * (180 / Math.PI);
 
-          // Diagonal length of the page
+          // Diagonal length
           const diag = Math.sqrt(width * width + height * height);
           const targetWidth = diag * DIAGONAL_RATIO;
 
-          // Find the font size so the text width = 80% of the diagonal
-          let lo = 4, hi = 600, bestSize = 48;
+          // Binary search for font size
+          let lo = 4, hi = 500, bestSize = 36;
           while (lo <= hi) {
             const mid = Math.floor((lo + hi) / 2);
             if (font.widthOfTextAtSize(text, mid) < targetWidth) { bestSize = mid; lo = mid + 1; }
             else { hi = mid - 1; }
           }
 
-          const tw = font.widthOfTextAtSize(text, bestSize);
-          const th = font.heightAtSize(bestSize);
-          const rad = diagAngle; // positive angle = bottom-left to top-right
+          // pdf-lib drawText: (x,y) is the left end of the baseline.
+          // With rotation, text pivots around (x,y).
+          // We want the text centered on the page center (cx, cy).
+          //
+          // After rotation by angle θ:
+          //   The text extends from (x,y) in direction θ for length tw.
+          //   Midpoint of baseline = (x + tw/2·cosθ, y + tw/2·sinθ)
+          //   We want that midpoint = (cx, cy)
+          //   So: x = cx - tw/2·cosθ
+          //       y = cy - tw/2·sinθ
 
-          // pdf-lib drawText places text at (x, y) = bottom-left corner of the text baseline
-          // With rotation, we need to compute so the text is centered on the page center
+          const tw = font.widthOfTextAtSize(text, bestSize);
+          const cosA = Math.cos(diagAngleRad);
+          const sinA = Math.sin(diagAngleRad);
+
           const cx = width / 2;
           const cy = height / 2;
 
-          // The text anchor is its left-baseline point.
-          // After rotation by `rad`, the center of the text bounding box relative to anchor is:
-          //   center offset = (tw/2 * cos(rad) - th/2 * sin(rad),  tw/2 * sin(rad) + th/2 * cos(rad))
-          // We want: anchor + centerOffset = (cx, cy)
-          // So: anchor = (cx, cy) - centerOffset
-
-          const cosR = Math.cos(rad);
-          const sinR = Math.sin(rad);
-
-          // Offset from anchor to center of text box (accounting for baseline ~ 80% of height from bottom)
-          const baselineRatio = 0.3; // approximate: baseline is ~30% up from bottom of bounding box
-          const ofsX = (tw / 2) * cosR - (th * baselineRatio) * sinR;
-          const ofsY = (tw / 2) * sinR + (th * baselineRatio) * cosR;
-
-          const x = cx - ofsX;
-          const y = cy - ofsY;
+          const x = cx - (tw / 2) * cosA;
+          const y = cy - (tw / 2) * sinA;
 
           page.drawText(text, {
             x, y,
