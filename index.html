@@ -30,14 +30,12 @@
     body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;align-items:center;justify-content:center}
     .app{max-width:460px;width:100%;margin:0 auto;padding:3rem 1.25rem}
 
-    /* HEADER */
     header{margin-bottom:2.5rem;text-align:center}
     .am-logo{margin-bottom:1rem}
     .am-logo img{height:38px;display:inline-block}
     header h1{font-size:1.65rem;font-weight:800;letter-spacing:-0.03em;color:var(--navy);line-height:1.1;margin-bottom:0.75rem}
     .tagline{color:var(--gray-tag);font-size:0.82rem;font-weight:400;letter-spacing:-0.005em}
 
-    /* CARD */
     .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.75rem;box-shadow:0 1px 3px rgba(1,36,74,0.06)}
     .section-label{font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--navy-muted);margin-bottom:0.75rem}
 
@@ -144,8 +142,8 @@
       <div class="settings-drawer" id="settingsDrawer">
         <div class="settings-inner">
           <div class="control-group">
-            <label>Taille police <span class="val" id="sizeVal">Auto</span></label>
-            <input type="range" id="fontSize" min="0" max="200" value="0"/>
+            <label>Taille police <span class="val" id="sizeVal">54 px</span></label>
+            <input type="range" id="fontSize" min="8" max="200" value="54"/>
           </div>
 
           <div class="control-group">
@@ -154,7 +152,7 @@
             <div class="angle-hints">
               <span class="angle-hint" data-angle="0" data-auto="false">Horizontal : 0°</span>
               <span class="angle-hint" data-angle="90" data-auto="false">Vertical : 90°</span>
-              <span class="angle-hint active" data-angle="45" data-auto="true">Diagonale : 31°– 59°</span>
+              <span class="angle-hint active" data-angle="45" data-auto="true">Diagonale : 31° – 59°</span>
             </div>
           </div>
 
@@ -191,10 +189,9 @@
   <script>
     const { PDFDocument, rgb, degrees, StandardFonts } = PDFLib;
     const FONT_KEY = StandardFonts.Helvetica;
-    const DIAGONAL_RATIO = 0.55;
 
     let pdfFile = null, pdfBytes = null, pageCount = 0;
-    let autoMode = true; // diagonal auto mode
+    let autoMode = true;
 
     const $ = id => document.getElementById(id);
     const dropzone = $('dropzone'), fileInput = $('fileInput'), fileCard = $('fileCard');
@@ -236,11 +233,10 @@
     }
 
     fontSizeInput.addEventListener('input', () => {
-      sizeVal.textContent = fontSizeInput.value === '0' ? 'Auto' : fontSizeInput.value + 'px';
+      sizeVal.textContent = fontSizeInput.value + ' px';
     });
 
     rotationInput.addEventListener('input', () => {
-      // If user manually drags slider, exit auto mode
       autoMode = false;
       updateRotationDisplay();
     });
@@ -249,12 +245,11 @@
     colorInput.addEventListener('input', () => { colorHex.textContent = colorInput.value; });
     settingsToggle.addEventListener('click', () => { settingsToggle.classList.toggle('open'); settingsDrawer.classList.toggle('open'); });
 
-    // Clickable angle hints
     angleHints.forEach(hint => {
       hint.addEventListener('click', () => {
         if (hint.dataset.auto === 'true') {
           autoMode = true;
-          rotationInput.value = 45; // middle of range visually
+          rotationInput.value = 45;
         } else {
           autoMode = false;
           rotationInput.value = hint.dataset.angle;
@@ -300,7 +295,7 @@
         const op = 1 - (transparency / 100);
         const { r, g, b } = hexToRgb(colorInput.value);
         const text = watermarkText.value.trim();
-        const userSize = parseInt(fontSizeInput.value);
+        const fontSize = parseInt(fontSizeInput.value);
 
         for (const page of doc.getPages()) {
           const { width, height } = page.getSize();
@@ -309,28 +304,12 @@
           const diagAngleRad = Math.atan2(height, width);
           const diagAngleDeg = diagAngleRad * (180 / Math.PI);
 
-          // Rotation: auto = true diagonal, otherwise use slider value
+          // Rotation
           const angleDeg = autoMode ? diagAngleDeg : parseInt(rotationInput.value);
           const angleRad = angleDeg * (Math.PI / 180);
 
-          // Font size
-          let bestSize;
-          if (userSize === 0) {
-            const diag = Math.sqrt(width * width + height * height);
-            const targetWidth = diag * DIAGONAL_RATIO;
-            let lo = 4, hi = 500;
-            bestSize = 36;
-            while (lo <= hi) {
-              const mid = Math.floor((lo + hi) / 2);
-              if (font.widthOfTextAtSize(text, mid) < targetWidth) { bestSize = mid; lo = mid + 1; }
-              else { hi = mid - 1; }
-            }
-          } else {
-            bestSize = userSize;
-          }
-
           // Center text on page
-          const tw = font.widthOfTextAtSize(text, bestSize);
+          const tw = font.widthOfTextAtSize(text, fontSize);
           const cosA = Math.cos(angleRad);
           const sinA = Math.sin(angleRad);
           const cx = width / 2;
@@ -340,7 +319,7 @@
 
           page.drawText(text, {
             x, y,
-            size: bestSize,
+            size: fontSize,
             font,
             color: rgb(r, g, b),
             opacity: op,
