@@ -90,6 +90,8 @@
     .angle-hint:hover{color:var(--navy);border-color:var(--border)}
     .angle-hint.active{color:var(--navy);font-weight:600;border-color:var(--navy-muted)}
 
+    .font-size-note{font-size:0.62rem;color:var(--text-sec);margin-top:0.3rem;font-style:italic}
+
     footer{text-align:center;padding:1.5rem 0 0;font-size:0.68rem;color:var(--text-sec);opacity:0.55}
     .hidden{display:none}
   </style>
@@ -142,30 +144,34 @@
       <div class="settings-drawer" id="settingsDrawer">
         <div class="settings-inner">
           <div class="control-group">
-            <label>Taille police <span class="val" id="sizeVal">54 px</span></label>
-            <input type="range" id="fontSize" min="8" max="200" value="54"/>
+            <label>
+              Taille police
+              <span class="val" id="sizeVal">Auto</span>
+            </label>
+            <input type="range" id="fontSize" min="8" max="200" value="0"/>
+            <div class="font-size-note" id="fontSizeNote">Adapté automatiquement au nombre de caractères</div>
           </div>
 
           <div class="control-group">
-            <label>Rotation <span class="val" id="rotationVal">Auto (diagonale)</span></label>
-            <input type="range" id="rotation" min="-90" max="90" value="45"/>
+            <label>Rotation <span class="val" id="rotationVal">52°</span></label>
+            <input type="range" id="rotation" min="-90" max="90" value="52"/>
             <div class="angle-hints">
               <span class="angle-hint" data-angle="0" data-auto="false">Horizontal : 0°</span>
               <span class="angle-hint" data-angle="90" data-auto="false">Vertical : 90°</span>
-              <span class="angle-hint active" data-angle="45" data-auto="true">Diagonale : 31° – 59°</span>
+              <span class="angle-hint" data-angle="45" data-auto="true">Diagonale : 31° – 59°</span>
             </div>
           </div>
 
           <div class="control-row">
             <div class="control-group">
-              <label>Transparence <span class="val" id="transpVal">90%</span></label>
-              <input type="range" id="transparency" min="0" max="100" value="90"/>
+              <label>Transparence <span class="val" id="transpVal">40%</span></label>
+              <input type="range" id="transparency" min="0" max="100" value="40"/>
             </div>
             <div class="control-group">
               <label>Couleur</label>
               <div class="color-pick">
-                <input type="color" id="color" value="#8899aa"/>
-                <span class="color-hex" id="colorHex">#8899aa</span>
+                <input type="color" id="color" value="#767a7f"/>
+                <span class="color-hex" id="colorHex">#767a7f</span>
               </div>
             </div>
           </div>
@@ -191,7 +197,8 @@
     const FONT_KEY = StandardFonts.Helvetica;
 
     let pdfFile = null, pdfBytes = null, pageCount = 0;
-    let autoMode = true;
+    let autoMode = false; // default: fixed 52°, not auto-diagonal
+    let fontSizeAuto = true; // default: adaptive font size
 
     const $ = id => document.getElementById(id);
     const dropzone = $('dropzone'), fileInput = $('fileInput'), fileCard = $('fileCard');
@@ -204,12 +211,32 @@
     const transpVal = $('transpVal'), colorHex = $('colorHex');
     const settingsToggle = $('settingsToggle'), settingsDrawer = $('settingsDrawer');
     const angleHints = document.querySelectorAll('.angle-hint');
+    const fontSizeNote = $('fontSizeNote');
     const exportBtnDefault = exportBtn.innerHTML;
 
     function showError(m){errorMsg.textContent=m;errorMsg.classList.remove('hidden')}
     function hideError(){errorMsg.classList.add('hidden')}
     function updateBtn(){const ok=pdfFile&&watermarkText.value.trim();exportBtn.classList.toggle('disabled',!ok);exportBtn.disabled=!ok}
     function hexToRgb(h){return{r:parseInt(h.slice(1,3),16)/255,g:parseInt(h.slice(3,5),16)/255,b:parseInt(h.slice(5,7),16)/255}}
+
+    /**
+     * Compute adaptive font size based on text length and page diagonal.
+     * Targets ~55% of the page diagonal width, capped to reasonable bounds.
+     * Short texts get bigger font, long texts get smaller font.
+     */
+    function computeAdaptiveFontSize(font, text, pageWidth, pageHeight) {
+      const diagonal = Math.sqrt(pageWidth * pageWidth + pageHeight * pageHeight);
+      const targetWidth = diagonal * 0.55;
+      // Binary search for the font size that fills targetWidth
+      let lo = 8, hi = 600, mid;
+      for (let i = 0; i < 20; i++) {
+        mid = (lo + hi) / 2;
+        const tw = font.widthOfTextAtSize(text, mid);
+        if (tw < targetWidth) lo = mid;
+        else hi = mid;
+      }
+      return Math.round(mid);
+    }
 
     function updateHintHighlight() {
       angleHints.forEach(h => {
@@ -232,8 +259,24 @@
       updateHintHighlight();
     }
 
+    function updateFontSizeDisplay() {
+      if (fontSizeAuto) {
+        sizeVal.textContent = 'Auto';
+        fontSizeNote.classList.remove('hidden');
+      } else {
+        sizeVal.textContent = fontSizeInput.value + ' px';
+        fontSizeNote.classList.add('hidden');
+      }
+    }
+
     fontSizeInput.addEventListener('input', () => {
-      sizeVal.textContent = fontSizeInput.value + ' px';
+      // If user moves the slider, exit auto mode
+      fontSizeAuto = false;
+      // Slider value 0 means auto, everything above is manual
+      if (parseInt(fontSizeInput.value) === 0) {
+        fontSizeAuto = true;
+      }
+      updateFontSizeDisplay();
     });
 
     rotationInput.addEventListener('input', () => {
@@ -295,18 +338,25 @@
         const op = 1 - (transparency / 100);
         const { r, g, b } = hexToRgb(colorInput.value);
         const text = watermarkText.value.trim();
-        const fontSize = parseInt(fontSizeInput.value);
+        const manualFontSize = parseInt(fontSizeInput.value);
 
         for (const page of doc.getPages()) {
           const { width, height } = page.getSize();
 
-          // Diagonal angle (bottom-left → top-right)
-          const diagAngleRad = Math.atan2(height, width);
-          const diagAngleDeg = diagAngleRad * (180 / Math.PI);
-
           // Rotation
-          const angleDeg = autoMode ? diagAngleDeg : parseInt(rotationInput.value);
+          let angleDeg;
+          if (autoMode) {
+            const diagAngleRad = Math.atan2(height, width);
+            angleDeg = diagAngleRad * (180 / Math.PI);
+          } else {
+            angleDeg = parseInt(rotationInput.value);
+          }
           const angleRad = angleDeg * (Math.PI / 180);
+
+          // Font size: auto-adaptive or manual
+          const fontSize = fontSizeAuto
+            ? computeAdaptiveFontSize(font, text, width, height)
+            : manualFontSize;
 
           // Center text on page
           const tw = font.widthOfTextAtSize(text, fontSize);
@@ -341,6 +391,10 @@
       exportBtn.disabled = false;
       updateBtn();
     });
+
+    // Initialize display
+    updateFontSizeDisplay();
+    updateRotationDisplay();
   </script>
 </body>
 </html>
