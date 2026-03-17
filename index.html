@@ -221,21 +221,38 @@
 
     /**
      * Compute adaptive font size based on text length and page diagonal.
-     * Targets ~55% of the page diagonal width, capped to reasonable bounds.
-     * Short texts get bigger font, long texts get smaller font.
+     * Targets ~55% of the page diagonal width, but capped at the size
+     * that a 12-character reference text would produce — so short words
+     * never get disproportionately huge.
      */
     function computeAdaptiveFontSize(font, text, pageWidth, pageHeight) {
       const diagonal = Math.sqrt(pageWidth * pageWidth + pageHeight * pageHeight);
       const targetWidth = diagonal * 0.55;
-      // Binary search for the font size that fills targetWidth
-      let lo = 8, hi = 600, mid;
-      for (let i = 0; i < 20; i++) {
-        mid = (lo + hi) / 2;
-        const tw = font.widthOfTextAtSize(text, mid);
-        if (tw < targetWidth) lo = mid;
-        else hi = mid;
+
+      function sizeForTarget(targetW) {
+        let lo = 8, hi = 600, mid;
+        for (let i = 0; i < 20; i++) {
+          mid = (lo + hi) / 2;
+          const tw = font.widthOfTextAtSize(text, mid);
+          if (tw < targetW) lo = mid;
+          else hi = mid;
+        }
+        return Math.round(mid);
       }
-      return Math.round(mid);
+
+      // Size computed for the actual text
+      const actualSize = sizeForTarget(targetWidth);
+
+      // Cap: size a 12-char reference string would get (using same target width)
+      // We compute what font size makes a 12-char string fill targetWidth,
+      // then use that as the maximum — regardless of how short the actual text is.
+      const REF_CHAR_COUNT = 12;
+      // Approximate reference width: Helvetica average char is ~0.55em wide
+      const approxRefWidth = REF_CHAR_COUNT * 0.55;
+      // Binary search for the cap size: size at which REF_CHAR_COUNT avg chars = targetWidth
+      const capSize = Math.round(targetWidth / approxRefWidth);
+
+      return Math.min(actualSize, capSize);
     }
 
     function updateHintHighlight() {
@@ -323,6 +340,12 @@
     dropzone.addEventListener('drop',e=>{e.preventDefault();dropzone.classList.remove('dragging');handleFile(e.dataTransfer.files[0])});
     removeBtn.addEventListener('click',removePdf);
     watermarkText.addEventListener('input',updateBtn);
+    watermarkText.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (!exportBtn.disabled) exportBtn.click();
+      }
+    });
 
     exportBtn.addEventListener('click', async () => {
       if (!pdfFile || !watermarkText.value.trim()) return;
